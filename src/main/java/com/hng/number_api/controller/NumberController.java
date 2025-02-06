@@ -8,11 +8,12 @@ import java.util.*;
 @RequestMapping("/api")
 public class NumberController {
 
-    @GetMapping("/classify-number")
-    public Map<String, Object> classifyNumber(@RequestParam String number) {
+    @GetMapping("/classify-number/{number}")
+    public Map<String, Object> classifyNumber(@PathVariable String number) {
         Map<String, Object> response = new HashMap<>();
 
-        if (!number.matches("\\d+")) {
+        // Validate Input: Reject non-natural numbers (negative, decimals, fractions, complex)
+        if (!number.matches("\\d+")) {  // Only allows positive integers (natural numbers)
             response.put("number", number);
             response.put("error", true);
             response.put("message", "Invalid input. Please enter a natural number (positive whole number).");
@@ -25,11 +26,12 @@ public class NumberController {
         response.put("is_perfect", isPerfect(num));
         response.put("digit_sum", digitSum(num));
         response.put("properties", getProperties(num));
-        response.put("math_fun_fact", getMathFunFact(num));
+        response.put("math_fun_fact", getMathFunFact(num));  // Fetches math fun fact using NumbersAPI
 
         return response;
     }
 
+    // Check if the number is Prime
     private boolean isPrime(int num) {
         if (num < 2) return false;
         for (int i = 2; i <= Math.sqrt(num); i++) {
@@ -38,6 +40,7 @@ public class NumberController {
         return true;
     }
 
+    // Check if the number is Perfect
     private boolean isPerfect(int num) {
         int sum = 1;
         for (int i = 2; i <= num / 2; i++) {
@@ -46,6 +49,7 @@ public class NumberController {
         return sum == num && num != 1;
     }
 
+    // Check if the number is Armstrong
     private boolean isArmstrong(int num) {
         int sum = 0, temp = num, digits = String.valueOf(num).length();
         while (temp > 0) {
@@ -56,6 +60,7 @@ public class NumberController {
         return sum == num;
     }
 
+    // Calculate the sum of digits
     private int digitSum(int num) {
         int sum = 0;
         while (num > 0) {
@@ -65,6 +70,7 @@ public class NumberController {
         return sum;
     }
 
+    // Get number properties (Armstrong & Odd/Even)
     private List<String> getProperties(int num) {
         List<String> properties = new ArrayList<>();
         if (isArmstrong(num)) properties.add("armstrong");
@@ -72,17 +78,15 @@ public class NumberController {
         return properties;
     }
 
+    // Get Math Fun Fact from NumbersAPI
     private String getMathFunFact(int num) {
         try {
-            String apiURL = "http://numbersapi.com/" + num + "/math?json";
+            String apiURL = "http://numbersapi.com/" + num + "/math?json";  // Uses "math" type from NumbersAPI
             RestTemplate restTemplate = new RestTemplate();
             Map<String, Object> factResponse = restTemplate.getForObject(apiURL, Map.class);
 
-            return (factResponse != null && factResponse.containsKey("text"))
-                    ? factResponse.get("text").toString()
-                    : "No math fun fact found.";
+            return (factResponse != null && factResponse.containsKey("text")) ? factResponse.get("text").toString() : "No math fun fact found.";
         } catch (Exception e) {
-            e.printStackTrace();
             return "Error fetching fun fact: " + e.getMessage();
         }
     }
