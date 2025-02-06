@@ -72,6 +72,4 @@ The API will start at http://localhost:8080/api/classify-number?number=28
 4. Railway (Deployment)
 
 ### Test Here ###
-You can test the API online at the following URL: https://number-api-production.up.railway.app/api/classify-number?number=2
-
-Simply replace the 2 in the URL with any number you'd like to check.
+You can test the API online at the following URL: https://number-api-production.up.railway.app/api/classify-number

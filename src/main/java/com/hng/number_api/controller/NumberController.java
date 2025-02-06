@@ -1,6 +1,8 @@
 package com.hng.number_api.controller;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import java.util.*;
 
@@ -8,30 +10,32 @@ import java.util.*;
 @RequestMapping("/api")
 public class NumberController {
 
-    @GetMapping("/classify-number/{number}")
-    public Map<String, Object> classifyNumber(@PathVariable String number) {
+    @GetMapping("/classify-number")
+    public ResponseEntity<Map<String, Object>> classifyNumber(@RequestParam(value = "number", defaultValue = "28") String number) {
         Map<String, Object> response = new HashMap<>();
 
-        // Validate Input: Reject non-natural numbers (negative, decimals, fractions, complex)
-        if (!number.matches("\\d+")) {  // Only allows positive integers (natural numbers)
-            response.put("number", number);
+        // Validate input to ensure it's a valid positive integer (natural number)
+        if (!number.matches("\\d+")) { // Only allows positive integers (natural numbers)
             response.put("error", true);
             response.put("message", "Invalid input. Please enter a natural number (positive whole number).");
-            return response;
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
         int num = Integer.parseInt(number);
+
+        // Prepare the response data
         response.put("number", num);
         response.put("is_prime", isPrime(num));
         response.put("is_perfect", isPerfect(num));
         response.put("digit_sum", digitSum(num));
         response.put("properties", getProperties(num));
-        response.put("math_fun_fact", getMathFunFact(num));  // Fetches math fun fact using NumbersAPI
+        response.put("math_fun_fact", getMathFunFact(num));
 
-        return response;
+        // Return the response with OK status (200)
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    // Check if the number is Prime
+    // Other methods for isPrime, isPerfect, etc...
     private boolean isPrime(int num) {
         if (num < 2) return false;
         for (int i = 2; i <= Math.sqrt(num); i++) {
@@ -40,7 +44,6 @@ public class NumberController {
         return true;
     }
 
-    // Check if the number is Perfect
     private boolean isPerfect(int num) {
         int sum = 1;
         for (int i = 2; i <= num / 2; i++) {
@@ -49,18 +52,6 @@ public class NumberController {
         return sum == num && num != 1;
     }
 
-    // Check if the number is Armstrong
-    private boolean isArmstrong(int num) {
-        int sum = 0, temp = num, digits = String.valueOf(num).length();
-        while (temp > 0) {
-            int digit = temp % 10;
-            sum += Math.pow(digit, digits);
-            temp /= 10;
-        }
-        return sum == num;
-    }
-
-    // Calculate the sum of digits
     private int digitSum(int num) {
         int sum = 0;
         while (num > 0) {
@@ -70,18 +61,15 @@ public class NumberController {
         return sum;
     }
 
-    // Get number properties (Armstrong & Odd/Even)
     private List<String> getProperties(int num) {
         List<String> properties = new ArrayList<>();
-        if (isArmstrong(num)) properties.add("armstrong");
         properties.add(num % 2 == 0 ? "even" : "odd");
         return properties;
     }
 
-    // Get Math Fun Fact from NumbersAPI
     private String getMathFunFact(int num) {
         try {
-            String apiURL = "http://numbersapi.com/" + num + "/math?json";  // Uses "math" type from NumbersAPI
+            String apiURL = "http://numbersapi.com/" + num + "/math?json";
             RestTemplate restTemplate = new RestTemplate();
             Map<String, Object> factResponse = restTemplate.getForObject(apiURL, Map.class);
 
