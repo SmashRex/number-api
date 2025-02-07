@@ -60,7 +60,7 @@ GET /api/classify-number?number={number}
 
 ./mvnw spring-boot:run;
 ```
-The API will start at http://localhost:8080/api/classify-number?number=28
+The API will start at http://localhost:8080/api/classify-number
 
 3. Deploy to Railway
    
