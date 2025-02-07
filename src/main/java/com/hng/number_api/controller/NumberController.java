@@ -9,31 +9,37 @@ import java.util.*;
 @RequestMapping("/api")
 public class NumberController {
 
-    // Endpoint now accepts the number as a path variable.
-    @GetMapping("/classify-number/{number}")
-    public ResponseEntity<Map<String, Object>> classifyNumber(@PathVariable String number) {
-        // Use a LinkedHashMap to preserve insertion order in the JSON response.
-        Map<String, Object> response = new LinkedHashMap<>();
+    // The main endpoint: If "number" is provided, process it;
+    // if null or empty, redirect to the error page.
+    @GetMapping("/classify-number")
+    public ResponseEntity<Map<String, Object>> classifyNumber(@RequestParam(required = false) String number) {
+        // Check if the "number" parameter is missing or empty
+        if (number == null || number.trim().isEmpty()) {
+            // Redirect (HTTP 302) to the error endpoint
+            return ResponseEntity.status(302).header("Location", "/api/error").build();
+        }
 
-        // Validate Input: Accept only valid integers (including negatives).
-        // The regex "-?\\d+" accepts an optional negative sign followed by one or more digits.
+        // Validate: Accept only valid integers (including negatives)
         if (!number.matches("-?\\d+")) {
-            response.put("number", number);
-            response.put("error", true);
-            return ResponseEntity.badRequest().body(response);
+            Map<String, Object> errorResponse = new LinkedHashMap<>();
+            errorResponse.put("number", number);
+            errorResponse.put("error", true);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
 
         int num;
         try {
             num = Integer.parseInt(number);
         } catch (NumberFormatException e) {
-            // This catches numbers that exceed the range of int.
-            response.put("number", number);
-            response.put("error", true);
-            return ResponseEntity.badRequest().body(response);
+            // If the number is too large to parse as an int, return an error.
+            Map<String, Object> errorResponse = new LinkedHashMap<>();
+            errorResponse.put("number", number);
+            errorResponse.put("error", true);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
 
-        // Build the JSON response in the required order.
+        // Build the response in the required key order using a LinkedHashMap.
+        Map<String, Object> response = new LinkedHashMap<>();
         response.put("number", num);
         response.put("is_prime", isPrime(num));
         response.put("is_perfect", isPerfect(num));
@@ -44,7 +50,19 @@ public class NumberController {
         return ResponseEntity.ok(response);
     }
 
-    // Returns true if num is prime; numbers less than 2 are not prime.
+    // Error endpoint: Returns an error JSON response when no number is provided.
+    @GetMapping("/error")
+    public ResponseEntity<Map<String, Object>> errorPage() {
+        Map<String, Object> errorResponse = new LinkedHashMap<>();
+        // Note: The error JSON here follows the assignment's required format.
+        errorResponse.put("error", true);
+        errorResponse.put("message", "Missing or empty number parameter");
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    // --- Helper Methods ---
+
+    // Checks if the number is prime (numbers less than 2 are not prime).
     private boolean isPrime(int num) {
         if (num < 2) return false;
         for (int i = 2; i <= Math.sqrt(num); i++) {
@@ -53,7 +71,7 @@ public class NumberController {
         return true;
     }
 
-    // Returns true if num is perfect; perfect numbers are defined only for positive integers.
+    // Checks if the number is perfect (only defined for positive numbers).
     private boolean isPerfect(int num) {
         if (num < 1) return false;
         int sum = 1;
@@ -63,7 +81,7 @@ public class NumberController {
         return num != 1 && sum == num;
     }
 
-    // Returns the sum of the digits of num (using absolute value for negative numbers).
+    // Calculates the sum of digits (works for negative numbers by summing the absolute digits).
     private int digitSum(int num) {
         int sum = 0;
         num = Math.abs(num);
@@ -74,8 +92,7 @@ public class NumberController {
         return sum;
     }
 
-    // Returns a list of properties. Currently, it checks whether the number is even/odd,
-    // and if it is an Armstrong number (only for non-negative numbers).
+    // Determines properties: adds "even"/"odd" and "armstrong" if applicable.
     private List<String> getProperties(int num) {
         List<String> properties = new ArrayList<>();
         if (isArmstrong(num)) {
@@ -85,7 +102,7 @@ public class NumberController {
         return properties;
     }
 
-    // Returns true if num is an Armstrong number. (Armstrong numbers are defined for non-negative integers.)
+    // Checks if the number is an Armstrong number (only for non-negative numbers).
     private boolean isArmstrong(int num) {
         if (num < 0) return false;
         int digits = String.valueOf(num).length();
@@ -99,7 +116,7 @@ public class NumberController {
         return sum == num;
     }
 
-    // Fetches a math fun fact for the given number from NumbersAPI.
+    // Fetches a math fun fact from the NumbersAPI.
     private String getMathFunFact(int num) {
         try {
             String apiURL = "http://numbersapi.com/" + num + "/math?json";
