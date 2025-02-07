@@ -71,17 +71,8 @@ public class NumberController {
         return String.valueOf(num).chars().map(c -> c - '0').sum();
     }
 
-    private List<String> getProperties(int num) {
-        List<String> properties = new ArrayList<>();
-        if (num >= 0 && isArmstrong(num)) {
-            properties.add("armstrong");
-        }
-        properties.add(num % 2 == 0 ? "even" : "odd");
-        return properties;
-    }
-
     private boolean isArmstrong(int num) {
-        int original = Math.abs(num);  // Consider absolute value for calculation
+        int original = Math.abs(num);  // Consider absolute value for Armstrong calculation
         int sum = 0, digits = String.valueOf(original).length();
         int temp = original;
 
@@ -96,7 +87,7 @@ public class NumberController {
     private List<String> getProperties(int num) {
         List<String> properties = new ArrayList<>();
 
-        // Now checking for Armstrong for both positive and negative numbers
+        // Allow Armstrong check for both positive and negative numbers
         if (isArmstrong(num)) {
             properties.add("armstrong");
         }
