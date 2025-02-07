@@ -1,8 +1,7 @@
 package com.hng.number_api.controller;
 
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import java.util.*;
 
@@ -11,19 +10,20 @@ import java.util.*;
 public class NumberController {
 
     @GetMapping("/classify-number")
-    public ResponseEntity<Map<String, Object>> classifyNumber(@RequestParam(value = "number", defaultValue = "28") String number) {
+    public ResponseEntity<Map<String, Object>> classifyNumber(@RequestParam String number) {
         Map<String, Object> response = new HashMap<>();
 
-        // Validate input to ensure it's a valid positive integer (natural number)
-        if (!number.matches("\\d+")) { // Only allows positive integers (natural numbers)
+        // Validate input: Accepts only integers (including negatives), rejects decimals & non-integer values
+        if (!number.matches("-?\\d+")) {
+            response.put("number", number);
             response.put("error", true);
-            response.put("message", "Invalid input. Please enter a natural number (positive whole number).");
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            return ResponseEntity.badRequest().body(response);
         }
 
         int num = Integer.parseInt(number);
 
-        // Prepare the response data
+        // Create a LinkedHashMap to ensure order
+        Map<String, Object> response = new LinkedHashMap<>();
         response.put("number", num);
         response.put("is_prime", isPrime(num));
         response.put("is_perfect", isPerfect(num));
@@ -31,11 +31,9 @@ public class NumberController {
         response.put("properties", getProperties(num));
         response.put("math_fun_fact", getMathFunFact(num));
 
-        // Return the response with OK status (200)
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+        return ResponseEntity.ok(response);
 
-    // Other methods for isPrime, isPerfect, etc...
+    }
     private boolean isPrime(int num) {
         if (num < 2) return false;
         for (int i = 2; i <= Math.sqrt(num); i++) {
@@ -54,8 +52,8 @@ public class NumberController {
 
     private int digitSum(int num) {
         int sum = 0;
-        while (num > 0) {
-            sum += num % 10;
+        while (num != 0) {  // Use num != 0 to correctly handle negative integers too
+            sum += Math.abs(num % 10);
             num /= 10;
         }
         return sum;
@@ -72,8 +70,9 @@ public class NumberController {
             String apiURL = "http://numbersapi.com/" + num + "/math?json";
             RestTemplate restTemplate = new RestTemplate();
             Map<String, Object> factResponse = restTemplate.getForObject(apiURL, Map.class);
-
-            return (factResponse != null && factResponse.containsKey("text")) ? factResponse.get("text").toString() : "No math fun fact found.";
+            return (factResponse != null && factResponse.containsKey("text"))
+                    ? factResponse.get("text").toString()
+                    : "No math fun fact found.";
         } catch (Exception e) {
             return "Error fetching fun fact: " + e.getMessage();
         }
