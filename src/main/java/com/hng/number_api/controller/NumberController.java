@@ -11,18 +11,17 @@ public class NumberController {
 
     @GetMapping("/classify-number")
     public ResponseEntity<Map<String, Object>> classifyNumber(@RequestParam String number) {
-        Map<String, Object> response = new HashMap<>();
-
-        // Validate input: Accepts only integers (including negatives), rejects decimals & non-integer values
+        // Validate Input: Accept only valid integers (including negatives)
         if (!number.matches("-?\\d+")) {
-            response.put("number", number);
-            response.put("error", true);
-            return ResponseEntity.badRequest().body(response);
+            Map<String, Object> errorResponse = new LinkedHashMap<>();
+            errorResponse.put("number", number);
+            errorResponse.put("error", true);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
 
         int num = Integer.parseInt(number);
 
-        // Create a LinkedHashMap to ensure order
+        // Create a LinkedHashMap to preserve insertion order
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("number", num);
         response.put("is_prime", isPrime(num));
@@ -32,8 +31,8 @@ public class NumberController {
         response.put("math_fun_fact", getMathFunFact(num));
 
         return ResponseEntity.ok(response);
-
     }
+
     private boolean isPrime(int num) {
         if (num < 2) return false;
         for (int i = 2; i <= Math.sqrt(num); i++) {
