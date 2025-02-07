@@ -3,7 +3,7 @@ package com.hng.number_api.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+
 import java.util.*;
 
 @RestController
@@ -39,7 +39,7 @@ public class NumberController {
         response.put("is_perfect", isPerfect(num));
         response.put("properties", getProperties(num));
         response.put("digit_sum", digitSum(num));
-        response.put("fun_fact", getMathFunFact(num));
+        response.put("fun_fact", CachedFunFact.getFunFact(num));
 
         return ResponseEntity.ok(response);
     }
@@ -54,7 +54,7 @@ public class NumberController {
     }
 
     private boolean isPerfect(int num) {
-        if (num < 1) return false;
+        if (num <= 1) return false; // Fix: 1 is NOT a perfect number
         int sum = 1;
         for (int i = 2; i * i <= num; i++) {
             if (num % i == 0) {
@@ -80,20 +80,13 @@ public class NumberController {
     }
 
     private boolean isArmstrong(int num) {
-        int original = num, sum = 0, digits = (int) Math.log10(num) + 1;
+        if (num < 0) return false; // Fix: Negative numbers cannot be Armstrong numbers
+        int original = num, sum = 0, digits = String.valueOf(num).length();
         while (num > 0) {
             sum += Math.pow(num % 10, digits);
             num /= 10;
         }
         return sum == original;
-    }
-
-    private String getMathFunFact(int num) {
-        try {
-            return CachedFunFact.getFunFact(num);
-        } catch (Exception e) {
-            return "Error fetching fun fact";
-        }
     }
 }
 
