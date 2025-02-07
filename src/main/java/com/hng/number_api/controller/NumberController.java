@@ -9,60 +9,40 @@ import java.util.*;
 @RequestMapping("/api")
 public class NumberController {
 
-    // The main endpoint: If "number" is provided, process it;
-    // if null or empty, redirect to the error page.
     @GetMapping("/classify-number")
-    public ResponseEntity<Map<String, Object>> classifyNumber(@RequestParam(required = false) String number) {
-        // Check if the "number" parameter is missing or empty
-        if (number == null || number.trim().isEmpty()) {
-            // Redirect (HTTP 302) to the error endpoint
-            return ResponseEntity.status(302).header("Location", "/api/error").build();
-        }
+    public ResponseEntity<Map<String, Object>> classifyNumber(@RequestParam String number) {
+        // Use LinkedHashMap to preserve insertion order.
+        Map<String, Object> response = new LinkedHashMap<>();
 
-        // Validate: Accept only valid integers (including negatives)
+        // Validate input: Accepts only valid integers (including negatives)
         if (!number.matches("-?\\d+")) {
-            Map<String, Object> errorResponse = new LinkedHashMap<>();
-            errorResponse.put("number", number);
-            errorResponse.put("error", true);
-            return ResponseEntity.badRequest().body(errorResponse);
+            response.put("number", number);
+            response.put("error", true);
+            return ResponseEntity.badRequest().body(response);
         }
 
         int num;
         try {
             num = Integer.parseInt(number);
         } catch (NumberFormatException e) {
-            // If the number is too large to parse as an int, return an error.
-            Map<String, Object> errorResponse = new LinkedHashMap<>();
-            errorResponse.put("number", number);
-            errorResponse.put("error", true);
-            return ResponseEntity.badRequest().body(errorResponse);
+            response.put("number", number);
+            response.put("error", true);
+            return ResponseEntity.badRequest().body(response);
         }
 
-        // Build the response in the required key order using a LinkedHashMap.
-        Map<String, Object> response = new LinkedHashMap<>();
+        // Build response in the required order:
+        // "number", "is_prime", "is_perfect", "properties", "digit_sum", "fun_fact"
         response.put("number", num);
         response.put("is_prime", isPrime(num));
         response.put("is_perfect", isPerfect(num));
-        response.put("digit_sum", digitSum(num));
         response.put("properties", getProperties(num));
-        response.put("math_fun_fact", getMathFunFact(num));
+        response.put("digit_sum", digitSum(num));
+        response.put("fun_fact", getMathFunFact(num));
 
         return ResponseEntity.ok(response);
     }
 
-    // Error endpoint: Returns an error JSON response when no number is provided.
-    @GetMapping("/error")
-    public ResponseEntity<Map<String, Object>> errorPage() {
-        Map<String, Object> errorResponse = new LinkedHashMap<>();
-        // Note: The error JSON here follows the assignment's required format.
-        errorResponse.put("error", true);
-        errorResponse.put("message", "Missing or empty number parameter");
-        return ResponseEntity.badRequest().body(errorResponse);
-    }
-
-    // --- Helper Methods ---
-
-    // Checks if the number is prime (numbers less than 2 are not prime).
+    // Checks if num is prime (numbers less than 2 are not prime)
     private boolean isPrime(int num) {
         if (num < 2) return false;
         for (int i = 2; i <= Math.sqrt(num); i++) {
@@ -71,7 +51,7 @@ public class NumberController {
         return true;
     }
 
-    // Checks if the number is perfect (only defined for positive numbers).
+    // Checks if num is a perfect number (only defined for positive integers)
     private boolean isPerfect(int num) {
         if (num < 1) return false;
         int sum = 1;
@@ -81,18 +61,18 @@ public class NumberController {
         return num != 1 && sum == num;
     }
 
-    // Calculates the sum of digits (works for negative numbers by summing the absolute digits).
+    // Computes the digit sum (using the absolute value to handle negatives)
     private int digitSum(int num) {
         int sum = 0;
-        num = Math.abs(num);
-        while (num > 0) {
-            sum += num % 10;
-            num /= 10;
+        int absNum = Math.abs(num);
+        while (absNum > 0) {
+            sum += absNum % 10;
+            absNum /= 10;
         }
         return sum;
     }
 
-    // Determines properties: adds "even"/"odd" and "armstrong" if applicable.
+    // Returns the list of properties: adds "armstrong" if applicable, then "even" or "odd"
     private List<String> getProperties(int num) {
         List<String> properties = new ArrayList<>();
         if (isArmstrong(num)) {
@@ -102,21 +82,21 @@ public class NumberController {
         return properties;
     }
 
-    // Checks if the number is an Armstrong number (only for non-negative numbers).
+    // Checks if num is an Armstrong number (for non-negative integers)
     private boolean isArmstrong(int num) {
         if (num < 0) return false;
+        int original = num;
         int digits = String.valueOf(num).length();
         int sum = 0;
-        int temp = num;
-        while (temp > 0) {
-            int digit = temp % 10;
-            sum += Math.pow(digit, digits);
-            temp /= 10;
+        while (num > 0) {
+            int d = num % 10;
+            sum += Math.pow(d, digits);
+            num /= 10;
         }
-        return sum == num;
+        return sum == original;
     }
 
-    // Fetches a math fun fact from the NumbersAPI.
+    // Fetches a math fun fact from the NumbersAPI and returns its "text" value.
     private String getMathFunFact(int num) {
         try {
             String apiURL = "http://numbersapi.com/" + num + "/math?json";
