@@ -81,13 +81,28 @@ public class NumberController {
     }
 
     private boolean isArmstrong(int num) {
-        if (num < 0) return false;
-        int original = num, sum = 0, digits = String.valueOf(num).length();
-        while (num > 0) {
-            sum += Math.pow(num % 10, digits);
-            num /= 10;
+        int original = Math.abs(num);  // Consider absolute value for calculation
+        int sum = 0, digits = String.valueOf(original).length();
+        int temp = original;
+
+        while (temp > 0) {
+            sum += Math.pow(temp % 10, digits);
+            temp /= 10;
         }
+
         return sum == original;
+    }
+
+    private List<String> getProperties(int num) {
+        List<String> properties = new ArrayList<>();
+
+        // Now checking for Armstrong for both positive and negative numbers
+        if (isArmstrong(num)) {
+            properties.add("armstrong");
+        }
+
+        properties.add(num % 2 == 0 ? "even" : "odd");
+        return properties;
     }
 
     private String getMathFunFact(int num) {
